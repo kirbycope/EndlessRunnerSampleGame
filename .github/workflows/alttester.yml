@@ -52,7 +52,13 @@ jobs:
           python -m unitypackage_extractor AltTester.unitypackage
       - name: AltTester Dependencies
         run: |
-          
+          sudo apt-get install jq
+          echo "$(jq '.dependencies += '{"com.unity.nuget.newtonsoft-json":"3.0.1"}' /Packages/manifest.json)" > /Packages/manifest.json
+          echo "$(jq '. += '{"testables": ["com.unity.inputsystem"]}' /Packages/manifest.json)" > /Packages/manifest.json
+          echo "$(jq '.dependencies += '{"com.unity.editorcoroutines": "1.0.0"}' /Packages/manifest.json)" > /Packages/manifest.json
+      - name: AltTester Instrument
+        run: |
+          echo Timmy!
 
       # Build
       - name: Build project
