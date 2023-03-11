@@ -58,7 +58,10 @@ jobs:
           echo "$(jq '.dependencies += '{"com.unity.editorcoroutines": "1.0.0"}' /Packages/manifest.json)" > /Packages/manifest.json
       - name: AltTester Instrument
         run: |
-          echo Timmy!
+          echo "https://altom.com/alttester/docs/sdk/pages/get-started.html#instrument-your-game-with-alttester-unity-sdk"
+      - name: AltTester Build Class
+        run: |
+          echo "https://altom.com/alttester/docs/sdk/pages/advanced-usage.html#build-games-from-the-command-line"
 
       # Build
       - name: Build project
