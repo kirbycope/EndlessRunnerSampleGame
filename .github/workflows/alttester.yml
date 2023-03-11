@@ -45,14 +45,15 @@ jobs:
       #    githubToken: ${{ secrets.GITHUB_TOKEN }}
 
       # AltTester
-      # 1. Download AltTester package
-      # 2. Import package into project
-      # 3. Resolve dependencies
-      # 4. 
-      - name: AltTester
+      - name: AltTester Download
         run: |
           curl https://altom.com/app/uploads/AltTester/sdks/AltTester.unitypackage -O
-          sudo installer -package AltTester.unitypackage -target /
+          pip install unitypackage_extractor
+          python -m unitypackage_extractor AltTester.unitypackage
+      - name: AltTester Dependencies
+        run: |
+          
+
       # Build
       - name: Build project
         uses: game-ci/unity-builder@v2
