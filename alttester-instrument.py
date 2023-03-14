@@ -26,9 +26,9 @@ urllib.request.urlretrieve(zip_url, "AltTester.zip")
 print(f"assets: {args.assets}")
 archive = ZipFile("AltTester.zip")
 for file in archive.namelist():
-    if file.startswith(f"AltTester-Unity-SDK-v.{args.version}/Assets"):
+    if file.startswith(f"AltTester-Unity-SDK-v.{args.version}/Assets/AltTester"):
         archive.extract(file, args.assets)
-os.rename(f"{args.assets}/AltTester-Unity-SDK-v.{args.version}",f"{args.assets}/AltTester")
+#os.rename(f"{args.assets}/AltTester-Unity-SDK-v.{args.version}",f"{args.assets}/AltTester")
 
 # Modify the manifest
 print(f"version: {args.manifest}")
