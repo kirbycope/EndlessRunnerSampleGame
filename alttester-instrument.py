@@ -5,7 +5,7 @@
 import argparse
 import urllib.request
 from zipfile import ZipFile
-import os
+import shutil
 import json
 
 # Parse sys args
@@ -24,11 +24,11 @@ urllib.request.urlretrieve(zip_url, "AltTester.zip")
 
 # Add AltTester to project
 print(f"assets: {args.assets}")
-archive = ZipFile("AltTester.zip")
-for file in archive.namelist():
-    if file.startswith(f"AltTester-Unity-SDK-v.{args.version}/Assets/AltTester"):
-        archive.extract(file, args.assets)
-#os.rename(f"{args.assets}/AltTester-Unity-SDK-v.{args.version}",f"{args.assets}/AltTester")
+with ZipFile("AltTester.zip", 'r') as zip:
+    zip.extractall(f"{args.assets}/temp")
+# \temp\AltTester-Unity-SDK-v.1.8.2\Assets\AltTester
+shutil.move(f"{args.assets}/temp/AltTester-Unity-SDK-v.1.8.2/Assets/AltTester", f"{args.assets}/AltTester") 
+shutil.rmtree(f"{args.assets}/temp")
 
 # Modify the manifest
 print(f"version: {args.manifest}")
