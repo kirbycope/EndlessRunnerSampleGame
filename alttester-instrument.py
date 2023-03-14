@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #$python alttester-instrument.py --help
-#$python alttester-instrument.py --version=1.8.2 --assets="C:\GitHub\EndlessRunnerSampleGame\Assets" --manifest="C:\GitHub\EndlessRunnerSampleGame\Packages\manifest.json" --buildFile="C:\GitHub\EndlessRunnerSampleGame\Assets\Editor\BundleAndBuild.cs" --buildMethod="Build()"
+#$python alttester-instrument.py --version=1.8.2 --assets="C:\GitHub\EndlessRunnerSampleGame\Assets" --settings="C:\GitHub\EndlessRunnerSampleGame\ProjectSettings\EditorBuildSettings.asset" --manifest="C:\GitHub\EndlessRunnerSampleGame\Packages\manifest.json" --buildFile="C:\GitHub\EndlessRunnerSampleGame\Assets\Editor\BundleAndBuild.cs" --buildMethod="Build()"
 
 import argparse
 import urllib.request
@@ -12,6 +12,7 @@ import json
 parser=argparse.ArgumentParser()
 parser.add_argument("--version", help="The AltTester version to use.")
 parser.add_argument("--assets", help="The Assests folder path.")
+parser.add_argument("--settings", help="The build settings file.")
 parser.add_argument("--manifest", help="The manifest file to modify.")
 parser.add_argument("--buildFile", help="The build file to modify.")
 parser.add_argument("--buildMethod", help="The build method to modify.")
@@ -51,8 +52,11 @@ with open(args.buildFile, "r+") as f:
     content = f.read()
     f.seek(0, 0)
     f.write(buildUsingDirectives + "\n" + content)
+    
+# Add scenes to instrumentation list
+with open(args.settings, "r") as f:
+    content = f.read()
 
-# ToDo: get list of scenes from `/ProjectSettings/EditorBuildSettings.asset` and add to instrumentation list
 
 # Modify the build file's build method
 print(f"buildMethod: {args.buildMethod}")
