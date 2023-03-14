@@ -26,8 +26,7 @@ urllib.request.urlretrieve(zip_url, "AltTester.zip")
 print(f"assets: {args.assets}")
 with ZipFile("AltTester.zip", 'r') as zip:
     zip.extractall(f"{args.assets}/temp")
-# \temp\AltTester-Unity-SDK-v.1.8.2\Assets\AltTester
-shutil.move(f"{args.assets}/temp/AltTester-Unity-SDK-v.1.8.2/Assets/AltTester", f"{args.assets}/AltTester") 
+shutil.move(f"{args.assets}/temp/AltTester-Unity-SDK-v.{args.version}/Assets/AltTester", f"{args.assets}/AltTester") 
 shutil.rmtree(f"{args.assets}/temp")
 
 # Modify the manifest
