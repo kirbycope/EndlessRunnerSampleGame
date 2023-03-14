@@ -23,6 +23,10 @@ zip = f"https://github.com/alttester/AltTester-Unity-SDK/archive/refs/tags/v.{ar
 urllib.request.urlretrieve(zip, "AltTester.zip")
 
 # ToDo: install unity package
+# I installed the unitypackage and it went into assets...
+# >    C:\GitHub\EndlessRunnerSampleGame\Assets\AltTester.meta
+# I looked in the zip and this is how it is layed out...
+# >    C:\GitHub\EndlessRunnerSampleGame\AltTester.zip\AltTester-Unity-SDK-v.1.8.2\Assets
 
 # Modify the manifest
 print(f"version: {args.manifest}")
