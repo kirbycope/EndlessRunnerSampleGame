@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #$python alttester-instrument.py --help
-#$python alttester-instrument.py --version=1.8.2 --assets="C:\GitHub\EndlessRunnerSampleGame\Assets" --settings="C:\GitHub\EndlessRunnerSampleGame\ProjectSettings\EditorBuildSettings.asset" --manifest="C:\GitHub\EndlessRunnerSampleGame\Packages\manifest.json" --buildFile="C:\GitHub\EndlessRunnerSampleGame\Assets\Editor\BundleAndBuild.cs" --buildMethod="Build()"
+#$python alttester-instrument.py --version=1.8.2 --assets="C:\GitHub\EndlessRunnerSampleGame\Assets" --manifest="C:\GitHub\EndlessRunnerSampleGame\Packages\manifest.json" --buildFile="C:\GitHub\EndlessRunnerSampleGame\Assets\Editor\BundleAndBuild.cs" --settings="C:\GitHub\EndlessRunnerSampleGame\ProjectSettings\EditorBuildSettings.asset" --buildMethod="Build()"
 
 import argparse
 import urllib.request
@@ -54,9 +54,14 @@ with open(args.buildFile, "r+") as f:
     f.write(buildUsingDirectives + "\n" + content)
     
 # Add scenes to instrumentation list
+print(f"settings: {args.settings}")
+scenes = []
 with open(args.settings, "r") as f:
-    content = f.read()
-
+    lines = f.readlines()
+    for line in lines:
+        if "path" in line:
+            scenes.append(line[line.rindex(" ")+1:].rstrip("\n"))
+print("[DEBUG] " + scenes) # ToDo: add scenes to build method (below)
 
 # Modify the build file's build method
 print(f"buildMethod: {args.buildMethod}")
