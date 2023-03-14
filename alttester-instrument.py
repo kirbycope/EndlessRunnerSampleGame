@@ -61,7 +61,7 @@ with open(args.settings, "r") as f:
     for line in lines:
         if "path" in line:
             scenes.append(line[line.rindex(" ")+1:].rstrip("\n"))
-print("[DEBUG] " + scenes) # ToDo: add scenes to build method (below)
+print("[DEBUG] " + str(scenes)) # ToDo: add scenes to build method (below)
 
 # Modify the build file's build method
 print(f"buildMethod: {args.buildMethod}")
