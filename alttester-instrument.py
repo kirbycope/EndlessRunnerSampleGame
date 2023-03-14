@@ -23,8 +23,10 @@ urllib.request.urlretrieve(zip_url, "AltTester.zip")
 
 # Add AltTester to project
 print(f"version: {args.assets}")
-with ZipFile("AltTester.zip", 'r') as zip:
-    zip.extractall(args.assets)
+archive = ZipFile("AltTester.zip")
+for file in archive.namelist():
+    if file.startswith(f"AltTester-Unity-SDK-v.{args.version}/Assets"):
+        archive.extract(file, args.assets)
 
 # Modify the manifest
 print(f"version: {args.manifest}")
