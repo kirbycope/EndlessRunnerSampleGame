@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #$python alttester-instrument.py --help
-#$python alttester-instrument.py --version=1.8.2 --manifest="C:\GitHub\EndlessRunnerSampleGame\Packages\manifest.json" --buildFile="C:\GitHub\EndlessRunnerSampleGame\Assets\Editor\BundleAndBuild.cs" --buildMethod="Build()"
+#$python alttester-instrument.py --version=1.8.2 --assets="C:\GitHub\EndlessRunnerSampleGame\Assets" --manifest="C:\GitHub\EndlessRunnerSampleGame\Packages\manifest.json" --buildFile="C:\GitHub\EndlessRunnerSampleGame\Assets\Editor\BundleAndBuild.cs" --buildMethod="Build()"
 
 import argparse
 import urllib.request
@@ -10,23 +10,21 @@ from zipfile import ZipFile
 # Parse sys args
 parser=argparse.ArgumentParser()
 parser.add_argument("--version", help="The AltTester version to use.")
+parser.add_argument("--assets", help="The Assests folder path.")
 parser.add_argument("--manifest", help="The manifest file to modify.")
 parser.add_argument("--buildFile", help="The build file to modify.")
 parser.add_argument("--buildMethod", help="The build method to modify.")
 args=parser.parse_args()
 
-# Download AltTester version
+# Download AltTester
 print(f"version: {args.version}")
-unitypackage = f"https://github.com/alttester/AltTester-Unity-SDK/releases/download/v.{args.version}/AltTester-v.{args.version}.unitypackage"
-urllib.request.urlretrieve(unitypackage, "AltTester.unitypackage")
-zip = f"https://github.com/alttester/AltTester-Unity-SDK/archive/refs/tags/v.{args.version}.zip"
-urllib.request.urlretrieve(zip, "AltTester.zip")
+zip_url = f"https://github.com/alttester/AltTester-Unity-SDK/archive/refs/tags/v.{args.version}.zip"
+urllib.request.urlretrieve(zip_url, "AltTester.zip")
 
-# ToDo: install unity package
-# I installed the unitypackage and it went into assets...
-# >    C:\GitHub\EndlessRunnerSampleGame\Assets\AltTester.meta
-# I looked in the zip and this is how it is layed out...
-# >    C:\GitHub\EndlessRunnerSampleGame\AltTester.zip\AltTester-Unity-SDK-v.1.8.2\Assets
+# Add AltTester to project
+print(f"version: {args.assets}")
+with ZipFile("AltTester.zip", 'r') as zip:
+    zip.extractall(args.assets)
 
 # Modify the manifest
 print(f"version: {args.manifest}")
