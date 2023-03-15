@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 #$python alttester-instrument.py --help
-#$python alttester-instrument.py --version=1.8.2 --assets="C:\GitHub\EndlessRunnerSampleGame\Assets" --manifest="C:\GitHub\EndlessRunnerSampleGame\Packages\manifest.json" --buildFile="C:\GitHub\EndlessRunnerSampleGame\Assets\Editor\BundleAndBuild.cs" --settings="C:\GitHub\EndlessRunnerSampleGame\ProjectSettings\EditorBuildSettings.asset" --buildMethod="Build()"
+#$python alttester-instrument.py --version=1.8.2 --assets="C:\GitHub\EndlessRunnerSampleGame\Assets" --settings="C:\GitHub\EndlessRunnerSampleGame\ProjectSettings\EditorBuildSettings.asset" --manifest="C:\GitHub\EndlessRunnerSampleGame\Packages\manifest.json" --buildFile="C:\GitHub\EndlessRunnerSampleGame\Assets\Editor\BundleAndBuild.cs" --buildMethod="Build()"
 
 import argparse
 import urllib.request
 from zipfile import ZipFile
 import shutil
 import json
+import os
 
 # Parse sys args
 parser=argparse.ArgumentParser()
@@ -61,17 +62,17 @@ with open(args.settings, "r") as f:
     for line in lines:
         if "path" in line:
             scenes.append(line[line.rindex(" ")+1:].rstrip("\n"))
-print("[DEBUG] " + str(scenes)) # ToDo: add scenes to build method (below)
 
 # Modify the build file's build method
 print(f"buildMethod: {args.buildMethod}")
-buildMethodBody = """\
+buildMethodBody = f"""\
         var buildTargetGroup = BuildTargetGroup.Android;
         AltBuilder.AddAltTesterInScriptingDefineSymbolsGroup(buildTargetGroup);
-        if (buildTargetGroup == UnityEditor.BuildTargetGroup.Standalone) {
+        if (buildTargetGroup == UnityEditor.BuildTargetGroup.Standalone) {{
             AltBuilder.CreateJsonFileForInputMappingOfAxis();
-        }
+        }}
         var instrumentationSettings = new AltInstrumentationSettings();
+        var FirstSceneOfTheGame = {scenes[0]}
         AltBuilder.InsertAltInScene(FirstSceneOfTheGame, instrumentationSettings);"""
 with open(args.buildFile, 'r') as infile:
     data = infile.read()
@@ -85,4 +86,33 @@ for i in range(len(rowData)):
 if line_to_add_code > 0:
     outData.insert(line_to_add_code, buildMethodBody)
 with open(args.buildFile, 'w') as outfile:
-    data = outfile.write('\n'.join(outData))   
+    outfile.write('\n'.join(outData))   
+
+# https://altom.com/alttester/docs/sdk/pages/faq-troubleshooting.html
+# I get the error: The type or namespace name 'InputSystem' does not exist in the namespace 'UnityEngine' (are you missing an assembly reference?)
+# delete:
+# - Assets\AltTester\AltServer\NewInputSystem.cs
+# - Assets\AltTester\AltServer\AltKeyMapping.cs
+os.remove(f"{args.assets}/AltTester/AltServer/NewInputSystem.cs")
+os.remove(f"{args.assets}/AltTester/AltServer/AltKeyMapping.cs")
+# comment in Assets\AltTester\AltServer\AltPrefabDrag.cs the entire #else statement
+content_to_find = """\
+#if ENABLE_LEGACY_INPUT_MANAGER
+                eventData.pointerDrag.transform.position = Input.mousePosition;
+#else
+            eventData.pointerDrag.gameObject.transform.position = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
+#endif"""
+content_to_replace = """\
+#if ENABLE_LEGACY_INPUT_MANAGER
+            eventData.pointerDrag.transform.position = Input.mousePosition;
+// #else
+        // eventData.pointerDrag.gameObject.transform.position = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
+#endif"""
+with open("fileName", "r+") as file:
+    data = file.read()
+    data = data.replace(content_to_find,content_to_replace)
+    file.write(data)
+# comment in Assets\AltTester\AltServer\Input.cs:
+# - all imports for using UnityEngine.InputSystem.UI
+# - all if lines that contain InputSystemUIInputModule and the curly brackets inside these if statements making sure to leave the code inside the brackets uncommented
+# comment in Assets\AltTester\AltServer\AltMockUpPointerInputModule.cs the same as the above
