@@ -28,7 +28,7 @@ testables = {"testables":["com.unity.inputsystem"]}
 editorcoroutines = {"com.unity.editorcoroutines": "1.0.0"}
 with open(args.manifest,'r+') as file:
     file_data = json.load(file)
-    # file_data["dependencies"].update(newtonsoft)
+    file_data["dependencies"].update(newtonsoft)
     file_data.update(testables)
     file_data["dependencies"].update(editorcoroutines)
     file.seek(0)
