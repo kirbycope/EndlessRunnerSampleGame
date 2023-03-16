@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #$python alttester-instrument.py --help
-#$python alttester-instrument.py --version=1.8.2 --assets="C:\GitHub\EndlessRunnerSampleGame\Assets" --settings="C:\GitHub\EndlessRunnerSampleGame\ProjectSettings\EditorBuildSettings.asset" --manifest="C:\GitHub\EndlessRunnerSampleGame\Packages\manifest.json" --buildFile="C:\GitHub\EndlessRunnerSampleGame\Assets\Editor\BundleAndBuild.cs" --buildMethod="Build()"
+#$python alttester-instrument.py --version=1.8.2 --assets="C:\GitHub\EndlessRunnerSampleGame\Assets" --settings="C:\GitHub\EndlessRunnerSampleGame\ProjectSettings\EditorBuildSettings.asset" --manifest="C:\GitHub\EndlessRunnerSampleGame\Packages\manifest.json" --buildFile="C:\GitHub\EndlessRunnerSampleGame\Assets\Editor\BundleAndBuild.cs" --buildMethod="Build() --inputSystem=old"
 
 import argparse
 import urllib.request
@@ -8,16 +8,6 @@ from zipfile import ZipFile
 import shutil
 import json
 import os
-
-# Parse sys args
-parser=argparse.ArgumentParser()
-parser.add_argument("--version", help="The AltTester version to use.")
-parser.add_argument("--assets", help="The Assests folder path.")
-parser.add_argument("--settings", help="The build settings file.")
-parser.add_argument("--manifest", help="The manifest file to modify.")
-parser.add_argument("--buildFile", help="The build file to modify.")
-parser.add_argument("--buildMethod", help="The build method to modify.")
-args=parser.parse_args()
 
 # Download AltTester
 print(f"version: {args.version}")
@@ -38,7 +28,7 @@ testables = {"testables":["com.unity.inputsystem"]}
 editorcoroutines = {"com.unity.editorcoroutines": "1.0.0"}
 with open(args.manifest,'r+') as file:
     file_data = json.load(file)
-    file_data["dependencies"].update(newtonsoft)
+    # file_data["dependencies"].update(newtonsoft)
     file_data.update(testables)
     file_data["dependencies"].update(editorcoroutines)
     file.seek(0)
@@ -72,7 +62,7 @@ buildMethodBody = f"""\
             AltBuilder.CreateJsonFileForInputMappingOfAxis();
         }}
         var instrumentationSettings = new AltInstrumentationSettings();
-        var FirstSceneOfTheGame = {scenes[0]}
+        var FirstSceneOfTheGame = "{scenes[0]}";
         AltBuilder.InsertAltInScene(FirstSceneOfTheGame, instrumentationSettings);"""
 with open(args.buildFile, 'r') as infile:
     data = infile.read()
@@ -82,37 +72,132 @@ line_to_add_code = 0
 for i in range(len(rowData)):
     outData.append(rowData[i])
     if args.buildMethod in rowData[i]:
-        line_to_add_code = i+2
+        if "{" in rowData[i]:
+            line_to_add_code = i+1
+        else:
+            line_to_add_code = i+2
 if line_to_add_code > 0:
     outData.insert(line_to_add_code, buildMethodBody)
 with open(args.buildFile, 'w') as outfile:
-    outfile.write('\n'.join(outData))   
+    outfile.write('\n'.join(outData))
 
-# https://altom.com/alttester/docs/sdk/pages/faq-troubleshooting.html
-# I get the error: The type or namespace name 'InputSystem' does not exist in the namespace 'UnityEngine' (are you missing an assembly reference?)
-# delete:
-# - Assets\AltTester\AltServer\NewInputSystem.cs
-# - Assets\AltTester\AltServer\AltKeyMapping.cs
-os.remove(f"{args.assets}/AltTester/AltServer/NewInputSystem.cs")
-os.remove(f"{args.assets}/AltTester/AltServer/AltKeyMapping.cs")
-# comment in Assets\AltTester\AltServer\AltPrefabDrag.cs the entire #else statement
-content_to_find = """\
-#if ENABLE_LEGACY_INPUT_MANAGER
-                eventData.pointerDrag.transform.position = Input.mousePosition;
-#else
-            eventData.pointerDrag.gameObject.transform.position = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
-#endif"""
-content_to_replace = """\
-#if ENABLE_LEGACY_INPUT_MANAGER
-            eventData.pointerDrag.transform.position = Input.mousePosition;
-// #else
-        // eventData.pointerDrag.gameObject.transform.position = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
-#endif"""
-with open("fileName", "r+") as file:
-    data = file.read()
-    data = data.replace(content_to_find,content_to_replace)
-    file.write(data)
-# comment in Assets\AltTester\AltServer\Input.cs:
-# - all imports for using UnityEngine.InputSystem.UI
-# - all if lines that contain InputSystemUIInputModule and the curly brackets inside these if statements making sure to leave the code inside the brackets uncommented
-# comment in Assets\AltTester\AltServer\AltMockUpPointerInputModule.cs the same as the above
+
+def delete_line_and_preceding (file_path, target_string):
+    """
+    This is my comment.
+
+    -----
+    Args:
+        file_path : The path to the file to modify.
+        target_string : The path to the file to modify.
+    """
+    with open(file_path, 'r+') as file:
+        lines = file.readlines()
+        fileOutBuffer = []
+        for i in range(len(lines)):
+            if target_string in lines[i]:
+                fileOutBuffer.pop()
+            else:
+                fileOutBuffer.append(lines[i])
+    with open(file_path, 'w') as file:
+        file.write("\n".join(fileOutBuffer))
+
+
+def delete_csharp_if(file_path, target_string):
+    """
+    Find c# conditional logic and make it unconditional.  
+
+    -----
+    Args:
+        file_path : The path to the file to modify.
+        target_string : String to search for
+    """
+    with open(file_path, 'r+') as file:
+        lines = file.readlines()
+        lines_to_pop = []
+        fileOutBuffer = []
+        popped_count = 0
+        brace_count = 0
+        for i in range(len(lines)):
+            if ("if" in lines[i]) and (target_string in lines[i]):
+                lines_to_pop.append(i)
+                # find the curly braces
+                # 1. flow where the { is on the end of the if line
+                if "{" in lines[i]:
+                    brace_count = 1
+                    current_line = i+1
+                    while brace_count > 0: # this is dangerous, no other escape condition. could run forever
+                        if "{" in lines[current_line]:
+                            brace_count += 1
+                        if "}" in lines[current_line]:
+                            brace_count -= 1
+                        current_line += 1
+                    lines_to_pop.append(current_line)
+                    
+                # 2. flow where the { is on the next line
+                else:
+                    brace_count = 1
+                    current_line = i+2
+                    lines_to_pop.append(i+1)
+                    while brace_count > 0: # this is dangerous, no other escape condition. could run forever
+                        current_line += 1
+                        if "{" in lines[current_line]:
+                            brace_count += 1
+                        if "}" in lines[current_line]:
+                            brace_count -= 1
+                    lines_to_pop.append(current_line)
+            fileOutBuffer.append(lines[i])
+        for badline in lines_to_pop:
+            fileOutBuffer.pop(badline - popped_count)
+            popped_count += 1
+
+
+    with open(file_path, 'w') as file:
+        file.write("".join(fileOutBuffer))
+
+
+def delete_using (file_path, target_string):
+    """
+    Delete library imports in C#
+
+    ----
+    Args:
+        - file_path : Path to the file to modify
+        - target_string : name of the package to remove
+    """
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+        fileOutBuffer = []
+        linez_2_pop = [] # POYZON
+        popped_count = 0
+        for i in range(len(lines)):
+            if ("using" in lines[i]) and (target_string in lines[i]):
+                linez_2_pop.append(i)
+            fileOutBuffer.append(lines[i])
+        for badline in linez_2_pop:
+            fileOutBuffer.pop(badline - popped_count)
+            popped_count += 1
+    
+    with open(file_path, 'w') as file:
+        file.write("".join(fileOutBuffer))
+
+
+# Remove references to NewInputSystem(NIS) if necessary
+if "old" in args.inputSystem:
+    # Adapt for old input system
+    os.remove(f"{args.assets}/AltTester/AltServer/NewInputSystem.cs")
+    os.remove(f"{args.assets}/AltTester/AltServer/AltKeyMapping.cs")
+
+    # remove examples, which can contain references to NIS
+    shutil.rmtree(f"{args.assets}/AltTester/Examples")
+    os.remove(f"{args.assets}/AltTester/Examples.meta")
+
+
+    alt_prefab_drag_path = f"{args.assets}/AltTester/AltServer/AltPrefabDrag.cs"
+    line_to_target = "UnityEngine.InputSystem"
+    delete_line_and_preceding(alt_prefab_drag_path, line_to_target)
+
+    delete_csharp_if(f"{args.assets}/AltTester/AltServer/Input.cs", "InputSystemUIInputModule")
+    delete_using(f"{args.assets}/AltTester/AltServer/Input.cs", "UnityEngine.InputSystem.UI")
+    delete_csharp_if(f"{args.assets}/AltTester/AltServer/AltMockUpPointerInputModule.cs", "InputSystemUIInputModule")
+    delete_using(f"{args.assets}/AltTester/AltServer/AltMockupPointerInputModule.cs", "UnityEngine.InputSystem.UI")
