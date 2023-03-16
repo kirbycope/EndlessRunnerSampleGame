@@ -44,24 +44,17 @@ jobs:
       #  with:
       #    githubToken: ${{ secrets.GITHUB_TOKEN }}
 
+      # Python
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+  
       # AltTester
-      - name: AltTester Download
+      - name: AltTester instrumentation
         run: |
-          curl https://altom.com/app/uploads/AltTester/sdks/AltTester.unitypackage -O
-          pip install unitypackage_extractor
-          python -m unitypackage_extractor AltTester.unitypackage
-      - name: AltTester Dependencies
-        run: |
-          sudo apt-get install jq
-          echo "$(jq '.dependencies += '{"com.unity.nuget.newtonsoft-json":"3.0.1"}' /Packages/manifest.json)" > /Packages/manifest.json
-          echo "$(jq '. += '{"testables": ["com.unity.inputsystem"]}' /Packages/manifest.json)" > /Packages/manifest.json
-          echo "$(jq '.dependencies += '{"com.unity.editorcoroutines": "1.0.0"}' /Packages/manifest.json)" > /Packages/manifest.json
-      - name: AltTester Instrument
-        run: |
-          echo "https://altom.com/alttester/docs/sdk/pages/get-started.html#instrument-your-game-with-alttester-unity-sdk"
-      - name: AltTester Build Class
-        run: |
-          echo "https://altom.com/alttester/docs/sdk/pages/advanced-usage.html#build-games-from-the-command-line"
+          pip install git+https://github.com/bigfishgames-external/AltTester-Instrumenter.git
+          assets="/Assets" --settings="/ProjectSettings/EditorBuildSettings.asset" --manifest="/Packages/manifest.json" --buildFile="/Assets/Editor/BundleAndBuild.cs" --buildMethod="Build" --inputSystem="old"
 
       # Build
       - name: Build project
