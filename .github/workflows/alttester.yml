@@ -53,7 +53,7 @@ jobs:
       # AltTester
       - name: AltTester instrumentation
         run: |
-          python -m pip install git+https://github.com/bigfishgames-external/AltTester-Instrumenter.git
+          pip install git+https://github.com/bigfishgames-external/AltTester-Instrumenter.git
           python -m altins --release="1.8.2" --assets="/Assets" --settings="/ProjectSettings/EditorBuildSettings.asset" --manifest="/Packages/manifest.json" --buildFile="/Assets/Editor/BundleAndBuild.cs" --buildMethod="Build" --inputSystem="old"
   
       # Build
